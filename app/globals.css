@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+:root {
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.18 0.01 270);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.01 270);
+
+  --muted: oklch(0.95 0.01 270);
+  --muted-foreground: oklch(0.45 0.01 270);
+
+  --primary: oklch(0.55 0.15 260);
+  --primary-foreground: oklch(1 0 0);
+
+  --border: oklch(0.9 0.01 270);
+}
+
+/* Dark mode */
+.dark {
+  --background: oklch(0.13 0.02 270);
+  --foreground: oklch(0.96 0.01 270);
+
+  --card: oklch(0.18 0.02 270);
+  --card-foreground: oklch(0.96 0.01 270);
+
+  --muted: oklch(0.22 0.02 270);
+  --muted-foreground: oklch(0.7 0.01 270);
+
+  --primary: oklch(0.72 0.14 230);
+  --primary-foreground: oklch(0.13 0.02 270);
+
+  --border: oklch(0.25 0.02 270);
+}
+
+/* Base */
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
