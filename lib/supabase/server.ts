@@ -1,0 +1,40 @@
+/**
+ * Supabase server client for Server Components and Server Actions.
+ * 
+ * This client automatically handles cookie-based session management
+ * and should be used for all server-side database operations.
+ * 
+ * Usage:
+ *   const supabase = createServerClient();
+ *   const { data: { user } } = await supabase.auth.getUser();
+ */
+
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import type { Database } from "./types";
+
+export async function createServerSupabaseClient() {
+  const cookieStore = await cookies();
+
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // Server Component cookies are read-only during render
+            // This is expected behavior and safe to ignore
+          }
+        },
+      },
+    }
+  );
+}
