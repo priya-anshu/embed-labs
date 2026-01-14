@@ -63,9 +63,8 @@ export interface BindQRResult {
  * or if it's available for binding.
  */
 export interface VerifyQRResult {
-  belongsToUser: boolean; // True if bound to current user
-  isBound: boolean; // True if bound to any user
-  isAvailable: boolean; // True if unbound (available for binding)
-  qrCode?: QRCode; // QR code data if found
+  belongsToUser: boolean;
+  isBound: boolean;
+  qrCode?: QRCode;
   error?: "NOT_FOUND" | "UNAUTHORIZED" | "UNKNOWN_ERROR";
 }

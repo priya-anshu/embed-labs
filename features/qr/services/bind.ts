@@ -18,7 +18,7 @@ import { validateQRCodeFormat, normalizeQRCode } from "./validation";
  * SECURITY:
  * - Uses auth.uid() from Supabase session
  * - Atomic UPDATE prevents race conditions
- * - No SELECT is performed (prevents data leakage)
+ * - No sensitive data is returned
  */
 export async function attemptBindQR(
   code: string
@@ -38,28 +38,30 @@ export async function attemptBindQR(
   try {
     const supabase = await createServerSupabaseClient();
 
-    // Atomic UPDATE:
-    // - Succeeds only if QR is unbound
-    // - RLS enforces bound_by_user_id = auth.uid()
-    const { data, error } = await (supabase as any)
+    /**
+     * IMPORTANT:
+     * Supabase UPDATE returns `never` unless `.select()` is used.
+     * We select ONLY the primary key to detect affected rows.
+     */
+    const { data, error } = await supabase
       .from("qr_codes")
       .update({
         bound_by_user_id: user.id,
         bound_at: new Date().toISOString(),
       })
       .eq("code", normalizedCode)
-      .is("bound_by_user_id", null);
+      .is("bound_by_user_id", null)
+      .select("id"); // ✅ minimal, safe, no data leak
 
     if (error) {
       return { success: false, error: "UNKNOWN_ERROR" };
     }
 
-    // If no rows were updated → QR already bound or does not exist
+    // No rows affected → already bound or not found
     if (!data || data.length === 0) {
       return { success: false, error: "ALREADY_BOUND" };
     }
 
-    // Success is inferred purely from UPDATE result
     return { success: true };
   } catch {
     return { success: false, error: "UNKNOWN_ERROR" };

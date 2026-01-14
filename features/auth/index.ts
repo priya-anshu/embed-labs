@@ -32,3 +32,7 @@ export type {
   SignInCredentials,
   AuthResult,
 } from "./services/types";
+
+// Role resolution
+export type { UserRole } from "./services/role";
+export { getCurrentUserRole } from "./services/role";

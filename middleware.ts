@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
     const isValid = await hasValidSession(request);
 
     if (!isValid) {
-      const redirectUrl = new URL("/auth/signin", request.url);
+      const redirectUrl = new URL("/login", request.url);
       redirectUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(redirectUrl);
     }

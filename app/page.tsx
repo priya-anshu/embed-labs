@@ -1,21 +1,25 @@
 /**
- * Home page - landing page for embedLabs.
- * 
- * This is a placeholder page. The actual landing page will be
- * implemented when the UI design is finalized.
+ * Root route - role-based router.
+ *
+ * This page does not render UI. It redirects users to the
+ * appropriate dashboard based on their role.
  */
 
-export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background font-sans">
-      <main className="flex flex-col items-center gap-8 px-8 py-16 text-center">
-        <h1 className="text-4xl font-semibold tracking-tight text-foreground">
-          EmbedLabs
-        </h1>
-        <p className="max-w-md text-lg leading-8 text-muted-foreground">
-          Online education platform with QR-based permanent access binding
-        </p>
-      </main>
-    </div>
-  );
+import { redirect } from "next/navigation";
+import { getCurrentUserRole } from "@/features/auth";
+
+export default async function Home() {
+  const role = await getCurrentUserRole();
+
+  if (role === "admin") {
+    redirect("/admin");
+  }
+
+  if (role === "user") {
+    redirect("/dashboard");
+  }
+
+  // Fallback: unauthenticated users should already be redirected by middleware.
+  // If they reach here, send them to login.
+  redirect("/login");
 }

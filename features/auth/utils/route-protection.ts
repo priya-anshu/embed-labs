@@ -26,17 +26,14 @@ export async function hasValidSession(request: NextRequest): Promise<boolean> {
  * Add routes here that should be protected.
  */
 export const PROTECTED_ROUTES: string[] = [
-  // Add protected route patterns here
-  // Example: "/dashboard",
-  // Example: "/courses/:path*",
+  "/",
+  "/dashboard",
+  "/admin",
 ];
 
 /**
  * Check if a path matches any protected route pattern.
  */
 export function isProtectedRoute(pathname: string): boolean {
-  return PROTECTED_ROUTES.some((pattern) => {
-    const regex = new RegExp(`^${pattern.replace(/:path\*/g, ".*")}$`);
-    return regex.test(pathname);
-  });
+  return PROTECTED_ROUTES.includes(pathname);
 }
