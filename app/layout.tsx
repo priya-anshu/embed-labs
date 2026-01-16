@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "embedLabs - Online Education Platform",
-  description: "QR-based permanent access binding for online education",
+  title: "Build-o-Bot - Online Education Platform",
+  description: "Guide your child through the build-o-bot journey",
 };
 
 export default function RootLayout({
