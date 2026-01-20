@@ -20,24 +20,31 @@ import type { Database } from "./types";
  * This client bypasses all RLS policies.
  * 
  * SECURITY: Only use for admin operations on the server.
+ * 
+ * @throws Error if SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL is missing
  */
 export function createServiceRoleClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!serviceRoleKey) {
+  if (!supabaseUrl) {
     throw new Error(
-      "SUPABASE_SERVICE_ROLE_KEY is required for admin operations"
+      "NEXT_PUBLIC_SUPABASE_URL environment variable is required for admin operations"
     );
   }
 
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    serviceRoleKey,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
+  if (!serviceRoleKey) {
+    throw new Error(
+      "SUPABASE_SERVICE_ROLE_KEY environment variable is required for admin operations. " +
+      "Please configure this in your environment variables. " +
+      "This key is server-side only and should never be exposed to the client."
+    );
+  }
+
+  return createClient<Database>(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }
