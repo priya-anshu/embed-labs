@@ -23,6 +23,9 @@ export interface QRCode {
   boundAt: Date | null; // NULL = unbound, NOT NULL = permanently bound
   boundByUserId: string | null; // NULL = unbound, NOT NULL = immutable ownership
   metadata: QRMetadata | null; // Restricted to non-sensitive data only
+  isActive: boolean; // FALSE = revoked (soft revoke)
+  revokedAt: Date | null; // NULL = not revoked, NOT NULL = revoked timestamp
+  revokedByAdminId: string | null; // NULL = not revoked, NOT NULL = admin who revoked
 }
 
 /**
@@ -67,4 +70,19 @@ export interface VerifyQRResult {
   isBound: boolean;
   qrCode?: QRCode;
   error?: "NOT_FOUND" | "UNAUTHORIZED" | "UNKNOWN_ERROR";
+}
+
+/**
+ * QR event record structure.
+ * 
+ * Represents an audit log entry for QR-related events.
+ */
+export interface QREvent {
+  id: string;
+  qrId: string;
+  adminId: string | null; // NULL for user-driven events (BOUND)
+  affectedUserId: string | null;
+  action: "GENERATED" | "BOUND" | "REVOKED" | "REASSIGNED";
+  details: Record<string, unknown> | null;
+  createdAt: Date;
 }
