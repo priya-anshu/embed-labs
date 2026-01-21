@@ -24,3 +24,14 @@ export {
   validateQRCodeFormat,
   normalizeQRCode,
 } from "./services/validation";
+
+// Token services (server-side only)
+export {
+  mintAccessToken,
+  consumeAccessToken,
+  type MintTokenResult,
+  type ConsumeTokenResult,
+} from "./services/tokens";
+
+// Admin services (server-side only, service role)
+export * as QRAdmin from "./services/admin";

@@ -9,3 +9,15 @@ export type { RevokeQRResult, ReassignQRResult, ReassignQROptions } from "./type
 export { revokeQR } from "./revoke";
 export { reassignQR } from "./reassign";
 export { logQREvent, type QREventAction, type QREventData } from "./audit";
+export {
+  createKit,
+  disableKit,
+  addKitItem,
+  grantKitToQR,
+  revokeKitGrant,
+  type CreateKitInput,
+  type KitResult,
+  type AddKitItemInput,
+  type GrantKitInput,
+  type RevokeKitGrantInput,
+} from "./kits";
