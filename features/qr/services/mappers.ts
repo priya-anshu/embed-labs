@@ -5,7 +5,7 @@
  * Assumes database structure matches QRCode interface.
  */
 
-import type { QRCode, QREvent } from "../types";
+import type { QRCode, QREvent, Kit, KitItem, QRKitGrant } from "../types";
 
 /**
  * Map database row to QRCode type.
@@ -39,5 +39,46 @@ export function mapDatabaseRowToQREvent(row: any): QREvent {
     action: row.action,
     details: row.details ?? null,
     createdAt: new Date(row.created_at),
+  };
+}
+
+/**
+ * Map database row to Kit type.
+ */
+export function mapDatabaseRowToKit(row: any): Kit {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description ?? null,
+    isActive: row.is_active ?? true,
+    createdAt: new Date(row.created_at),
+  };
+}
+
+/**
+ * Map database row to KitItem type.
+ */
+export function mapDatabaseRowToKitItem(row: any): KitItem {
+  return {
+    id: row.id,
+    kitId: row.kit_id,
+    contentType: row.content_type,
+    contentId: row.content_id,
+    createdAt: new Date(row.created_at),
+  };
+}
+
+/**
+ * Map database row to QRKitGrant type.
+ */
+export function mapDatabaseRowToQRKitGrant(row: any): QRKitGrant {
+  return {
+    id: row.id,
+    qrId: row.qr_id,
+    kitId: row.kit_id,
+    grantedByAdminId: row.granted_by_admin_id ?? null,
+    grantedAt: new Date(row.granted_at),
+    revokedAt: row.revoked_at ? new Date(row.revoked_at) : null,
+    revokedByAdminId: row.revoked_by_admin_id ?? null,
   };
 }

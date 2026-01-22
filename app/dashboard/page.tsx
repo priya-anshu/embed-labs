@@ -5,11 +5,14 @@
  * middleware and root route redirects.
  */
 
-import { getUserQR, getUserQREvents } from "@/features/qr/services/read";
+import { getUserQR, getUserQREvents, getUserKits } from "@/features/qr/services/read";
+import { KitList } from "./kits/KitList";
+import { MintTokenButton } from "./kits/MintTokenButton";
 
 export default async function DashboardPage() {
   const qrCode = await getUserQR();
   const events = await getUserQREvents();
+  const kits = await getUserKits();
 
   return (
     <main>
@@ -25,6 +28,14 @@ export default async function DashboardPage() {
         ) : (
           <p>No QR code assigned.</p>
         )}
+      </section>
+      <section>
+        <h2>Your Kits</h2>
+        <KitList kits={kits} />
+      </section>
+      <section>
+        <h2>Access Token</h2>
+        <MintTokenButton />
       </section>
       <section>
         <h2>Recent Events</h2>

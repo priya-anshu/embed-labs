@@ -13,11 +13,15 @@ export type {
   QRMetadata,
   BindQRResult,
   VerifyQRResult,
+  Kit,
+  KitItem,
+  QRKitGrant,
 } from "./types";
 
 export {
   bindQRAction,
   verifyQRAction,
+  mintTokenAction,
 } from "./actions";
 
 export {
@@ -32,6 +36,12 @@ export {
   type MintTokenResult,
   type ConsumeTokenResult,
 } from "./services/tokens";
+
+// Content delivery (server-side only)
+export {
+  validateContentAccess,
+  type ContentAccessResult,
+} from "./services/content";
 
 // Admin services (server-side only, service role)
 export * as QRAdmin from "./services/admin";

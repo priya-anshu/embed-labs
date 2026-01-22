@@ -86,3 +86,53 @@ export interface QREvent {
   details: Record<string, unknown> | null;
   createdAt: Date;
 }
+
+/**
+ * Kit record structure.
+ */
+export interface Kit {
+  id: string;
+  name: string;
+  description: string | null;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+/**
+ * Kit item record structure.
+ */
+export interface KitItem {
+  id: string;
+  kitId: string;
+  contentType: string;
+  contentId: string;
+  createdAt: Date;
+}
+
+/**
+ * QR kit grant record structure.
+ */
+export interface QRKitGrant {
+  id: string;
+  qrId: string;
+  kitId: string;
+  grantedByAdminId: string | null;
+  grantedAt: Date;
+  revokedAt: Date | null;
+  revokedByAdminId: string | null;
+}
+
+/**
+ * Result of minting an access token.
+ */
+export interface MintTokenResult {
+  success: boolean;
+  token?: string; // RAW token, returned once
+  expiresAt?: Date;
+  error?:
+    | "UNAUTHORIZED"
+    | "NO_ACTIVE_QR"
+    | "NO_ACTIVE_GRANT"
+    | "SERVICE_CONFIGURATION_ERROR"
+    | "UNKNOWN_ERROR";
+}

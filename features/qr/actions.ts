@@ -8,14 +8,16 @@
  * Never trust client-provided user IDs or QR codes.
  * 
  * Usage:
- *   import { bindQRAction, verifyQRAction } from "@/features/qr/actions";
+ *   import { bindQRAction, verifyQRAction, mintTokenAction } from "@/features/qr/actions";
  */
 
 "use server";
 
 import { attemptBindQR } from "./services/bind";
 import { verifyQRBinding } from "./services/verify";
+import { mintAccessToken } from "./services/tokens";
 import type { BindQRResult, VerifyQRResult } from "./types";
+import type { MintTokenResult } from "./services/tokens";
 
 /**
  * Server Action: Attempt to bind a QR code to the current user.
@@ -48,4 +50,19 @@ export async function verifyQRAction(
   code: string
 ): Promise<VerifyQRResult> {
   return verifyQRBinding(code);
+}
+
+/**
+ * Server Action: Mint a single-use access token for the current user.
+ * 
+ * SECURITY: Server-side validation only.
+ * - User must be authenticated
+ * - User must own an ACTIVE QR
+ * - QR must have at least one ACTIVE kit grant
+ * - Returns RAW token once (never stored)
+ * 
+ * @returns MintTokenResult with raw token and expiry
+ */
+export async function mintTokenAction(): Promise<MintTokenResult> {
+  return mintAccessToken();
 }
