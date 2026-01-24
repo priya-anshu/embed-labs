@@ -13,6 +13,17 @@ export interface CloudinarySignedUrlResult {
   error?: "CONFIGURATION_ERROR" | "INVALID_RESOURCE_ID" | "UNKNOWN_ERROR";
 }
 
+export interface CloudinaryUploadResult {
+  success: boolean;
+  publicId?: string;
+  resourceType?: "image" | "video" | "raw";
+  secureUrl?: string;
+  bytes?: number;
+  format?: string;
+  originalFilename?: string;
+  error?: "CONFIGURATION_ERROR" | "INVALID_FILE" | "UPLOAD_FAILED" | "UNKNOWN_ERROR";
+}
+
 /**
  * Initialize Cloudinary configuration.
  */
@@ -87,5 +98,69 @@ export async function generateCloudinarySignedUrl(
       success: false,
       error: "UNKNOWN_ERROR",
     };
+  }
+}
+
+function inferCloudinaryResourceTypeFromMime(
+  mimeType: string | null | undefined
+): "image" | "video" | "raw" | "auto" {
+  if (!mimeType) return "auto";
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("video/")) return "video";
+  return "raw";
+}
+
+export async function uploadToCloudinary(params: {
+  fileBuffer: Buffer;
+  mimeType?: string | null;
+  filename?: string | null;
+  folder?: string | null;
+  publicId?: string | null;
+  tags?: string[];
+  context?: Record<string, string>;
+}): Promise<CloudinaryUploadResult> {
+  const cloudinary = initializeCloudinary();
+  if (!cloudinary) {
+    return { success: false, error: "CONFIGURATION_ERROR" };
+  }
+
+  if (!params.fileBuffer || params.fileBuffer.length === 0) {
+    return { success: false, error: "INVALID_FILE" };
+  }
+
+  const resourceType = inferCloudinaryResourceTypeFromMime(params.mimeType);
+
+  try {
+    const result = await new Promise<any>((resolve, reject) => {
+      const upload = cloudinary.uploader.upload_stream(
+        {
+          resource_type: resourceType === "auto" ? "auto" : resourceType,
+          folder: params.folder ?? undefined,
+          public_id: params.publicId ?? undefined,
+          tags: params.tags ?? undefined,
+          context: params.context ?? undefined,
+          // Enforce secure URLs in responses
+          secure: true,
+        },
+        (error, uploadResult) => {
+          if (error) return reject(error);
+          return resolve(uploadResult);
+        }
+      );
+
+      upload.end(params.fileBuffer);
+    });
+
+    return {
+      success: true,
+      publicId: result.public_id,
+      resourceType: result.resource_type,
+      secureUrl: result.secure_url,
+      bytes: result.bytes,
+      format: result.format,
+      originalFilename: result.original_filename,
+    };
+  } catch {
+    return { success: false, error: "UPLOAD_FAILED" };
   }
 }

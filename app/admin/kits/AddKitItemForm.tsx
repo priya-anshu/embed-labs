@@ -2,12 +2,20 @@
 
 /**
  * Client component: Add kit item form.
- * 
- * SECURITY: Calls guarded admin API route only.
- * Explicit error handling, no silent failures.
+ *
+ * Picks from content library (GET /api/admin/content) and attaches to kit
+ * via POST /api/admin/kits/add-item.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+
+interface ContentItem {
+  id: string;
+  contentType: string;
+  title: string | null;
+  filename: string | null;
+}
 
 interface AddKitItemFormProps {
   kitId: string;
@@ -15,98 +23,100 @@ interface AddKitItemFormProps {
 }
 
 export function AddKitItemForm({ kitId, onSuccess }: AddKitItemFormProps) {
-  const [contentType, setContentType] = useState("");
-  const [contentId, setContentId] = useState("");
+  const [items, setItems] = useState<ContentItem[]>([]);
+  const [selectedId, setSelectedId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    fetch("/api/admin/content")
+      .then((r) => r.json())
+      .then((d) => (d.success && d.items ? setItems(d.items) : setItems([])))
+      .catch(() => setItems([]));
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedId) {
+      setError("Select content");
+      return;
+    }
+    const c = items.find((i) => i.id === selectedId);
+    if (!c) {
+      setError("Selected content not found");
+      return;
+    }
     setIsLoading(true);
     setError(null);
     setSuccess(false);
 
     try {
-      const response = await fetch("/api/admin/kits/add-item", {
+      const res = await fetch("/api/admin/kits/add-item", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           kitId,
-          contentType: contentType.trim(),
-          contentId: contentId.trim(),
+          contentType: c.contentType,
+          contentId: c.id,
         }),
       });
+      const data = await res.json();
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        const errorMessage =
-          data.error === "INVALID_REQUEST"
-            ? "Invalid input - all fields are required"
-            : data.error === "UNAUTHORIZED"
-            ? "Unauthorized - please log in"
-            : data.error === "FORBIDDEN"
-            ? "Forbidden - admin access required"
-            : data.error === "SERVICE_CONFIGURATION_ERROR"
-            ? `Service configuration error: ${data.message || "Unknown"}`
-            : `Failed to add kit item: ${data.error || "Unknown error"}`;
-
-        setError(errorMessage);
+      if (!res.ok || !data.success) {
+        const msg =
+          data.error === "INVALID_REQUEST" ? "Invalid input" :
+          data.error === "UNAUTHORIZED" ? "Unauthorized" :
+          data.error === "FORBIDDEN" ? "Forbidden" :
+          data.error === "SERVICE_CONFIGURATION_ERROR" ? "Config error" :
+          data.error || "Failed to add";
+        setError(msg);
         setIsLoading(false);
         return;
       }
-
       setSuccess(true);
-      setContentType("");
-      setContentId("");
+      setSelectedId("");
       setIsLoading(false);
       onSuccess?.();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? `Network error: ${err.message}`
-          : "Failed to add kit item"
-      );
+      setError(err instanceof Error ? err.message : "Failed to add");
       setIsLoading(false);
     }
   };
+
+  if (items.length === 0) {
+    return (
+      <p>
+        No content in library. <Link href="/admin/content">Upload content</Link> first.
+      </p>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit}>
       <div>
         <label>
-          Content Type:
-          <input
-            type="text"
-            value={contentType}
-            onChange={(e) => setContentType(e.target.value)}
-            placeholder="e.g., COURSE, LESSON, VIDEO, FILE"
+          Content:{" "}
+          <select
+            value={selectedId}
+            onChange={(e) => setSelectedId(e.target.value)}
             required
             disabled={isLoading}
-          />
-        </label>
-      </div>
-      <div>
-        <label>
-          Content ID:
-          <input
-            type="text"
-            value={contentId}
-            onChange={(e) => setContentId(e.target.value)}
-            placeholder="UUID of the content"
-            required
-            disabled={isLoading}
-          />
+          >
+            <option value="">— select —</option>
+            {items.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.contentType}: {c.title || c.filename || c.id}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
       <button type="submit" disabled={isLoading}>
-        {isLoading ? "Adding..." : "Add Item"}
+        {isLoading ? "Adding..." : "Add to kit"}
       </button>
       {error && <p>Error: {error}</p>}
-      {success && <p>Item added successfully!</p>}
+      {success && <p>Added.</p>}
     </form>
   );
 }
