@@ -6,6 +6,7 @@
  */
 
 import type { QRCode, QREvent, Kit, KitItem, QRKitGrant } from "../types";
+import type { PlaylistRecord, PlaylistItemRecord } from "./admin/playlists";
 
 /**
  * Map database row to QRCode type.
@@ -80,5 +81,33 @@ export function mapDatabaseRowToQRKitGrant(row: any): QRKitGrant {
     grantedAt: new Date(row.granted_at),
     revokedAt: row.revoked_at ? new Date(row.revoked_at) : null,
     revokedByAdminId: row.revoked_by_admin_id ?? null,
+  };
+}
+
+/**
+ * Map database row to PlaylistRecord type.
+ */
+export function mapDatabaseRowToPlaylist(row: any): PlaylistRecord {
+  return {
+    id: row.id,
+    kitId: row.kit_id,
+    name: row.name,
+    description: row.description ?? null,
+    sortIndex: row.sort_index,
+    createdAt: new Date(row.created_at),
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
+  };
+}
+
+/**
+ * Map database row to PlaylistItemRecord type.
+ */
+export function mapDatabaseRowToPlaylistItem(row: any): PlaylistItemRecord {
+  return {
+    id: row.id,
+    playlistId: row.playlist_id,
+    contentId: row.content_id,
+    sortIndex: row.sort_index,
+    createdAt: new Date(row.created_at),
   };
 }
