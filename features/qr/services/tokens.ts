@@ -126,6 +126,87 @@ export async function mintAccessToken(): Promise<MintTokenResult> {
 }
 
 /**
+ * Mint a single-use access token for a specific kit.
+ * Requirements:
+ * - User must be authenticated
+ * - User must own an ACTIVE QR (is_active = true)
+ * - QR must have an ACTIVE grant for the specified kit
+ * Returns RAW token once; only the hash is stored.
+ */
+export async function mintAccessTokenForKit(kitId: string): Promise<MintTokenResult> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { success: false, error: "UNAUTHORIZED" };
+  }
+
+  const adminSupabase = createServiceRoleClient() as any;
+
+  try {
+    // Find an active QR for this user
+    const { data: qrData, error: qrError } = await adminSupabase
+      .from("qr_codes")
+      .select("id")
+      .eq("bound_by_user_id", user.id)
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+
+    if (qrError || !qrData) {
+      return { success: false, error: "NO_ACTIVE_QR" };
+    }
+
+    // Verify user has active grant for this specific kit
+    const { data: grantData, error: grantError } = await adminSupabase
+      .from("qr_kit_grants")
+      .select("kit_id")
+      .eq("qr_id", qrData.id)
+      .eq("kit_id", kitId)
+      .is("revoked_at", null)
+      .maybeSingle();
+
+    if (grantError || !grantData) {
+      return { success: false, error: "NO_ACTIVE_GRANT" };
+    }
+
+    // Generate raw token and hash
+    const rawToken = randomBytes(32).toString("base64url");
+    const tokenHash = hashToken(rawToken);
+    const expiresAt = new Date(Date.now() + DEFAULT_TOKEN_TTL_MS);
+
+    const { error: insertError } = await adminSupabase
+      .from("access_tokens")
+      .insert({
+        token_hash: tokenHash,
+        qr_id: qrData.id,
+        user_id: user.id,
+        kit_id: kitId,
+        expires_at: expiresAt.toISOString(),
+        purpose: "CONTENT_SESSION",
+      });
+
+    if (insertError) {
+      if (
+        insertError.message.includes("SUPABASE_SERVICE_ROLE_KEY") ||
+        insertError.message.includes("service role")
+      ) {
+        return { success: false, error: "SERVICE_CONFIGURATION_ERROR" };
+      }
+      return { success: false, error: "UNKNOWN_ERROR" };
+    }
+
+    return { success: true, token: rawToken, expiresAt };
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      err.message.includes("SUPABASE_SERVICE_ROLE_KEY")
+    ) {
+      return { success: false, error: "SERVICE_CONFIGURATION_ERROR" };
+    }
+    return { success: false, error: "UNKNOWN_ERROR" };
+  }
+}
+
+/**
  * Consume a token atomically.
  * Uses RPC consume_access_token to enforce:
  * - single use (used_at IS NULL)

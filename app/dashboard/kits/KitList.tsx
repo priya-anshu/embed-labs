@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import type { Kit } from "@/features/qr/types";
 import type { PlaylistRecord, PlaylistItemRecord } from "@/features/qr/services/admin/playlists";
 import type { ContentRecord } from "@/features/qr/services/admin/contents";
+import { ContentPlayer } from "./ContentPlayer";
 
 interface KitListProps {
   kits: Kit[];
@@ -18,6 +19,7 @@ export function KitList({ kits }: KitListProps) {
   const [itemsMap, setItemsMap] = useState<Record<string, PlaylistItemRecord[]>>({});
   const [contentsMap, setContentsMap] = useState<Record<string, ContentRecord>>({});
   const [expandedKits, setExpandedKits] = useState<Set<string>>(new Set());
+  const [playingContent, setPlayingContent] = useState<string | null>(null);
 
   const loadContentTitles = async (contentIds: string[]) => {
     if (contentIds.length === 0) return;
@@ -142,11 +144,36 @@ export function KitList({ kits }: KitListProps) {
                               <ol>
                                 {items.map((item) => {
                                   const content = contentsMap[item.contentId];
+                                  const isPlaying = playingContent === item.contentId;
                                   return (
                                     <li key={item.id}>
                                       {content
                                         ? content.title || content.filename || content.id
                                         : item.contentId}
+                                      {!isPlaying && (
+                                        <button
+                                          type="button"
+                                          onClick={() => setPlayingContent(item.contentId)}
+                                        >
+                                          View / Play
+                                        </button>
+                                      )}
+                                      {isPlaying && content && (
+                                        <div>
+                                          <ContentPlayer
+                                            contentId={item.contentId}
+                                            contentType={content.contentType}
+                                            kitId={kit.id}
+                                            title={content.title || content.filename}
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => setPlayingContent(null)}
+                                          >
+                                            Close
+                                          </button>
+                                        </div>
+                                      )}
                                     </li>
                                   );
                                 })}

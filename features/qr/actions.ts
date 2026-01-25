@@ -66,3 +66,20 @@ export async function verifyQRAction(
 export async function mintTokenAction(): Promise<MintTokenResult> {
   return mintAccessToken();
 }
+
+/**
+ * Server Action: Mint a single-use access token for a specific kit.
+ * 
+ * SECURITY: Server-side validation only.
+ * - User must be authenticated
+ * - User must own an ACTIVE QR
+ * - QR must have an ACTIVE grant for the specified kit
+ * - Returns RAW token once (never stored)
+ * 
+ * @param kitId - Kit ID to mint token for
+ * @returns MintTokenResult with raw token and expiry
+ */
+export async function mintTokenForKitAction(kitId: string): Promise<MintTokenResult> {
+  const { mintAccessTokenForKit } = await import("./services/tokens");
+  return mintAccessTokenForKit(kitId);
+}
