@@ -6,7 +6,7 @@
  * - Shows kit details, items, and grants
  */
 
-import { redirect, notFound } from "next/navigation";
+import type { PlaylistItemRecord } from "@/features/qr/services/admin/playlists";
 import { getCurrentUser } from "@/features/auth";
 import { getCurrentUserRole } from "@/features/auth/services/role";
 import {
@@ -15,6 +15,11 @@ import {
   getKitGrants,
   getAllQRs,
 } from "@/features/qr/services/read";
+import {
+  getPlaylistsByKit,
+  getPlaylistItems,
+} from "@/features/qr/services/admin/playlists";
+import { listContents } from "@/features/qr/services/admin/contents";
 import { KitDetail } from "./KitDetail";
 
 interface PageProps {
@@ -39,11 +44,18 @@ export default async function AdminKitDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const [items, grants, qrs] = await Promise.all([
+  const [items, grants, qrs, playlists, contents] = await Promise.all([
     getKitItems(id),
     getKitGrants(id),
     getAllQRs(),
+    getPlaylistsByKit(id),
+    listContents(),
   ]);
+
+  const playlistItemsMap: Record<string, PlaylistItemRecord[]> = {};
+  for (const playlist of playlists) {
+    playlistItemsMap[playlist.id] = await getPlaylistItems(playlist.id);
+  }
 
   return (
     <KitDetail
@@ -51,6 +63,9 @@ export default async function AdminKitDetailPage({ params }: PageProps) {
       items={items}
       grants={grants}
       qrs={qrs}
+      playlists={playlists}
+      playlistItemsMap={playlistItemsMap}
+      contents={contents}
     />
   );
 }

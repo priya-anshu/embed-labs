@@ -9,16 +9,23 @@ import Link from "next/link";
 import { AddKitItemForm } from "../AddKitItemForm";
 import { GrantKitToQRForm } from "../GrantKitToQRForm";
 import { RevokeKitGrantButton } from "../RevokeKitGrantButton";
+import { CreatePlaylistForm } from "../CreatePlaylistForm";
+import { PlaylistList } from "../PlaylistList";
 import type { Kit, KitItem, QRKitGrant, QRCode } from "@/features/qr/types";
+import type { PlaylistRecord, PlaylistItemRecord } from "@/features/qr/services/admin/playlists";
+import type { ContentRecord } from "@/features/qr/services/admin/contents";
 
 interface KitDetailProps {
   kit: Kit;
   items: KitItem[];
   grants: QRKitGrant[];
   qrs: QRCode[];
+  playlists: PlaylistRecord[];
+  playlistItemsMap: Record<string, PlaylistItemRecord[]>;
+  contents: ContentRecord[];
 }
 
-export function KitDetail({ kit, items, grants, qrs }: KitDetailProps) {
+export function KitDetail({ kit, items, grants, qrs, playlists, playlistItemsMap, contents }: KitDetailProps) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleSuccess = () => {
@@ -54,6 +61,17 @@ export function KitDetail({ kit, items, grants, qrs }: KitDetailProps) {
           </ul>
         )}
         <AddKitItemForm key={refreshKey} kitId={kit.id} onSuccess={handleSuccess} />
+      </div>
+
+      <div>
+        <h2>Playlists</h2>
+        <CreatePlaylistForm key={refreshKey} kitId={kit.id} onSuccess={handleSuccess} />
+        <PlaylistList
+          playlists={playlists}
+          playlistItemsMap={playlistItemsMap}
+          contents={contents}
+          onSuccess={handleSuccess}
+        />
       </div>
 
       <div>
