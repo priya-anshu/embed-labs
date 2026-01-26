@@ -1,6 +1,6 @@
 /**
  * Read-only QR data fetching services.
- * 
+ *
  * SECURITY-FIRST:
  * - User services use regular client (RLS enforced)
  * - Admin services use service role (bypasses RLS)
@@ -24,7 +24,7 @@ import type { PlaylistRecord, PlaylistItemRecord } from "./admin/playlists";
 
 /**
  * Get the current user's QR code (if bound).
- * 
+ *
  * SECURITY: Uses regular client, RLS ensures user can only
  * read their own bound QR.
  */
@@ -56,7 +56,7 @@ export async function getUserQR(): Promise<QRCode | null> {
 
 /**
  * Get QR events for the current user.
- * 
+ *
  * SECURITY: Uses regular client, RLS ensures user can only
  * read events where they are the affected user.
  */
@@ -88,7 +88,7 @@ export async function getUserQREvents(): Promise<QREvent[]> {
 
 /**
  * Get all QR codes (admin only).
- * 
+ *
  * SECURITY: Uses service role to bypass RLS.
  * Only call this from admin pages with role verification.
  */
@@ -113,7 +113,7 @@ export async function getAllQRs(): Promise<QRCode[]> {
 
 /**
  * Get all QR events (admin only).
- * 
+ *
  * SECURITY: Uses service role to bypass RLS.
  * Only call this from admin pages with role verification.
  */
@@ -138,13 +138,13 @@ export async function getAllQREvents(): Promise<QREvent[]> {
 
 /**
  * Get all kits (admin only).
- * 
+ *
  * SECURITY: Uses service role to bypass RLS.
  * Only call this from admin pages with role verification.
  */
 export async function getAllKits(): Promise<Kit[]> {
   try {
-    const adminSupabase = createServiceRoleClient() as any;
+    const adminSupabase = createServiceRoleClient() ;
 
     const { data, error } = await adminSupabase
       .from("kits")
@@ -163,13 +163,13 @@ export async function getAllKits(): Promise<Kit[]> {
 
 /**
  * Get kit by ID (admin only).
- * 
+ *
  * SECURITY: Uses service role to bypass RLS.
  * Only call this from admin pages with role verification.
  */
 export async function getKitById(kitId: string): Promise<Kit | null> {
   try {
-    const adminSupabase = createServiceRoleClient() as any;
+    const adminSupabase = createServiceRoleClient() ;
 
     const { data, error } = await adminSupabase
       .from("kits")
@@ -195,7 +195,7 @@ export async function getKitById(kitId: string): Promise<Kit | null> {
  */
 export async function getKitItems(kitId: string): Promise<KitItem[]> {
   try {
-    const adminSupabase = createServiceRoleClient() as any;
+    const adminSupabase = createServiceRoleClient() ;
 
     const { data, error } = await adminSupabase
       .from("kit_items")
@@ -221,7 +221,7 @@ export async function getKitItems(kitId: string): Promise<KitItem[]> {
  */
 export async function getQRKitGrants(qrId: string): Promise<QRKitGrant[]> {
   try {
-    const adminSupabase = createServiceRoleClient() as any;
+    const adminSupabase = createServiceRoleClient() ;
 
     const { data, error } = await adminSupabase
       .from("qr_kit_grants")
@@ -247,7 +247,7 @@ export async function getQRKitGrants(qrId: string): Promise<QRKitGrant[]> {
  */
 export async function getKitGrants(kitId: string): Promise<QRKitGrant[]> {
   try {
-    const adminSupabase = createServiceRoleClient() as any;
+    const adminSupabase = createServiceRoleClient() ;
 
     const { data, error } = await adminSupabase
       .from("qr_kit_grants")
@@ -295,7 +295,7 @@ export async function getUserKits(): Promise<Kit[]> {
 
     // Find active grants for this QR
     // Note: Using type assertion until Supabase types are regenerated
-    const { data: grantsData, error: grantsError } = await (supabase as any)
+    const { data: grantsData, error: grantsError } = await supabase
       .from("qr_kit_grants")
       .select("kit_id")
       .eq("qr_id", qrData.id)
@@ -310,7 +310,7 @@ export async function getUserKits(): Promise<Kit[]> {
     // Fetch kit details (using service role since kits table has no user RLS)
     // Note: This is safe because we're only fetching kits that are already
     // granted to the user's QR, and we're not exposing sensitive data.
-    const adminSupabase = createServiceRoleClient() as any;
+    const adminSupabase = createServiceRoleClient() ;
     const { data: kitsData, error: kitsError } = await adminSupabase
       .from("kits")
       .select("*")
@@ -357,7 +357,7 @@ export async function getUserKitPlaylists(kitId: string): Promise<PlaylistRecord
     }
 
     // Step 2: Verify user has active grant for this kit
-    const { data: grantData, error: grantError } = await (supabase as any)
+    const { data: grantData, error: grantError } = await supabase
       .from("qr_kit_grants")
       .select("kit_id")
       .eq("qr_id", qrData.id)
@@ -371,7 +371,7 @@ export async function getUserKitPlaylists(kitId: string): Promise<PlaylistRecord
 
     // Step 3: User has access - fetch playlists (using service role for playlists table)
     // This is safe because we've already validated kit access via grants
-    const adminSupabase = createServiceRoleClient() as any;
+    const adminSupabase = createServiceRoleClient() ;
     const { data: playlistsData, error: playlistsError } = await adminSupabase
       .from("playlists")
       .select("id, kit_id, name, description, sort_index, created_at, deleted_at")
@@ -405,7 +405,7 @@ export async function getPlaylistItemsForUser(playlistId: string): Promise<Playl
 
   try {
     const supabase = await createServerSupabaseClient();
-    const adminSupabase = createServiceRoleClient() as any;
+    const adminSupabase = createServiceRoleClient() ;
 
     // Step 1: Find user's active QR
     const { data: qrData, error: qrError } = await supabase
@@ -432,7 +432,7 @@ export async function getPlaylistItemsForUser(playlistId: string): Promise<Playl
     }
 
     // Step 3: Verify user has active grant for this kit
-    const { data: grantData, error: grantError } = await (supabase as any)
+    const { data: grantData, error: grantError } = await supabase
       .from("qr_kit_grants")
       .select("kit_id")
       .eq("qr_id", qrData.id)
@@ -479,7 +479,7 @@ export async function getUserContentRecords(
 
   try {
     const supabase = await createServerSupabaseClient();
-    const adminSupabase = createServiceRoleClient() as any;
+    const adminSupabase = createServiceRoleClient() ;
 
     // Step 1: Find user's active QR
     const { data: qrData, error: qrError } = await supabase
@@ -494,7 +494,7 @@ export async function getUserContentRecords(
     }
 
     // Step 2: Find active grants for this QR
-    const { data: grantsData, error: grantsError } = await (supabase as any)
+    const { data: grantsData, error: grantsError } = await supabase
       .from("qr_kit_grants")
       .select("kit_id")
       .eq("qr_id", qrData.id)
@@ -527,11 +527,11 @@ export async function getUserContentRecords(
       .select("id, content_type, title, filename")
       .in("id", Array.from(accessibleContentIds));
 
-    if (contentsError || !contentsData) {
-      return [];
-    }
+      if (contentsError || !contentsData) {
+        return [];
+      }
 
-    return contentsData.map((row: any) => ({
+      return contentsData.map((row) => ({
       id: row.id,
       title: row.title ?? null,
       filename: row.filename ?? null,

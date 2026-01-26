@@ -11,7 +11,7 @@
 
 import { useState, useEffect } from "react";
 import { mintTokenForKitAction } from "@/features/qr/actions";
-
+import Image from "next/image";
 interface ContentPlayerProps {
   contentId: string;
   contentType: string;
@@ -98,7 +98,7 @@ export function ContentPlayer({
     } else if (contentType === "IMAGE") {
       return (
         <div>
-          <img src={signedUrl} alt={title || "Content"} style={{ maxWidth: "100%" }} />
+          <Image src={signedUrl} alt={title || "Content"} width={500} height={500} style={{ maxWidth: "100%" }} />
         </div>
       );
     } else {

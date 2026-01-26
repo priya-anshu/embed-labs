@@ -2,7 +2,9 @@
 
 /**
  * Client component: Button to mint access token.
- * 
+ * Flow:
+ * 1. User clicks "Mint Access Token"
+ * 2. Calls mintTokenAction server action
  * SECURITY: Calls server action only.
  * Explicit error handling, no silent failures.
  */

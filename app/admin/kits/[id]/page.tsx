@@ -5,6 +5,7 @@
  * - Server-side role check (admin only)
  * - Shows kit details, items, and grants
  */
+import { redirect, notFound } from "next/navigation";
 
 import type { PlaylistItemRecord } from "@/features/qr/services/admin/playlists";
 import { getCurrentUser } from "@/features/auth";

@@ -1,12 +1,12 @@
 /**
  * Supabase service role client for admin operations.
- * 
+ *
  * SECURITY: This client bypasses RLS and should ONLY be used
  * for admin operations that require elevated privileges.
- * 
+ *
  * NEVER use this client in user-facing code or client components.
  * This is server-side only and requires SUPABASE_SERVICE_ROLE_KEY.
- * 
+ *
  * Usage:
  *   const adminSupabase = createServiceRoleClient();
  *   await adminSupabase.from('qr_codes').update(...);
@@ -18,9 +18,9 @@ import type { Database } from "./types";
 /**
  * Create a Supabase client with service role key.
  * This client bypasses all RLS policies.
- * 
+ *
  * SECURITY: Only use for admin operations on the server.
- * 
+ *
  * @throws Error if SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL is missing
  */
 export function createServiceRoleClient() {
