@@ -36,4 +36,4 @@ export type {
 
 // Role resolution
 export type { UserRole } from "./services/role";
-export { getCurrentUserRole } from "./services/role";
+export { getCurrentUserRole, getCurrentUserRoleFromRequest } from "./services/role";

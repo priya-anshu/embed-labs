@@ -6,8 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/features/auth";
-import { getCurrentUserRole } from "@/features/auth/services/role";
+import { getCurrentUserFromRequest } from "@/features/auth";
+import { getCurrentUserRoleFromRequest } from "@/features/auth/services/role";
 import { updatePlaylist, softDeletePlaylist } from "@/features/qr/services/admin/playlists";
 
 interface RouteParams {
@@ -19,7 +19,7 @@ export async function PATCH(
   { params }: RouteParams
 ) {
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUserFromRequest(request);
     if (!user) {
       return NextResponse.json(
         { success: false, error: "UNAUTHORIZED" },
@@ -27,7 +27,7 @@ export async function PATCH(
       );
     }
 
-    const role = await getCurrentUserRole();
+    const role = await getCurrentUserRoleFromRequest(request);
     if (role !== "admin") {
       return NextResponse.json(
         { success: false, error: "FORBIDDEN" },
@@ -76,7 +76,7 @@ export async function DELETE(
   { params }: RouteParams
 ) {
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUserFromRequest(request);
     if (!user) {
       return NextResponse.json(
         { success: false, error: "UNAUTHORIZED" },
@@ -84,7 +84,7 @@ export async function DELETE(
       );
     }
 
-    const role = await getCurrentUserRole();
+    const role = await getCurrentUserRoleFromRequest(request);
     if (role !== "admin") {
       return NextResponse.json(
         { success: false, error: "FORBIDDEN" },

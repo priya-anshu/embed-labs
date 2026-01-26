@@ -9,8 +9,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/features/auth";
-import { getCurrentUserRole } from "@/features/auth/services/role";
+import { getCurrentUserFromRequest } from "@/features/auth";
+import { getCurrentUserRoleFromRequest } from "@/features/auth/services/role";
 import { reassignQR } from "@/features/qr/services/admin";
 import type { ReassignQROptions } from "@/features/qr/services/admin";
 
@@ -28,7 +28,7 @@ import type { ReassignQROptions } from "@/features/qr/services/admin";
 export async function POST(request: NextRequest) {
   try {
     // 1. Require authenticated session
-    const user = await getCurrentUser();
+    const user = await getCurrentUserFromRequest(request);
     if (!user) {
       return NextResponse.json(
         { success: false, error: "UNAUTHORIZED" },
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Verify admin role (server-side only)
-    const role = await getCurrentUserRole();
+    const role = await getCurrentUserRoleFromRequest(request);
     if (role !== "admin") {
       return NextResponse.json(
         { success: false, error: "FORBIDDEN" },

@@ -5,14 +5,14 @@
  * Response: { success: true, items: ContentRecord[] }
  */
 
-import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/features/auth";
-import { getCurrentUserRole } from "@/features/auth/services/role";
+import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUserFromRequest } from "@/features/auth";
+import { getCurrentUserRoleFromRequest } from "@/features/auth/services/role";
 import { listContents } from "@/features/qr/services/admin/contents";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUserFromRequest(request);
     if (!user) {
       return NextResponse.json(
         { success: false, error: "UNAUTHORIZED" },
@@ -20,7 +20,7 @@ export async function GET() {
       );
     }
 
-    const role = await getCurrentUserRole();
+    const role = await getCurrentUserRoleFromRequest(request);
     if (role !== "admin") {
       return NextResponse.json(
         { success: false, error: "FORBIDDEN" },
