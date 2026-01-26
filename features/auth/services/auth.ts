@@ -16,6 +16,7 @@ import type {
 /**
  * Sign up a new user with email and password.
  */
+
 export async function signUp(
   credentials: SignUpCredentials
 ): Promise<AuthResult> {

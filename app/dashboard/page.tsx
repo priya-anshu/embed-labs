@@ -8,11 +8,17 @@
 import { getUserQR, getUserQREvents, getUserKits } from "@/features/qr/services/read";
 import { KitList } from "./kits/KitList";
 import { MintTokenButton } from "./kits/MintTokenButton";
+import { getCurrentUser } from "@/features/auth/services/session";
 
 export default async function DashboardPage() {
   const qrCode = await getUserQR();
   const events = await getUserQREvents();
   const kits = await getUserKits();
+  const user = await getCurrentUser();
+  console.log("API USER:", user?.id);
+  console.log("QR CODE:", qrCode?.code);
+  console.log("EVENTS:", events.length);
+  console.log("KITS:", kits.length);
 
   return (
     <main>

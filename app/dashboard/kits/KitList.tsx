@@ -10,16 +10,20 @@ import type { PlaylistRecord, PlaylistItemRecord } from "@/features/qr/services/
 import type { ContentRecord } from "@/features/qr/services/admin/contents";
 import { ContentPlayer } from "./ContentPlayer";
 
+
 interface KitListProps {
   kits: Kit[];
 }
 
 export function KitList({ kits }: KitListProps) {
+  console.log("KITS PROP:", kits);
   const [playlistsMap, setPlaylistsMap] = useState<Record<string, PlaylistRecord[]>>({});
   const [itemsMap, setItemsMap] = useState<Record<string, PlaylistItemRecord[]>>({});
   const [contentsMap, setContentsMap] = useState<Record<string, ContentRecord>>({});
   const [expandedKits, setExpandedKits] = useState<Set<string>>(new Set());
-  const [playingContent, setPlayingContent] = useState<string | null>(null);
+  const [playingItemId, setPlayingItemId] = useState<string | null>(null);
+
+  
 
   const loadContentTitles = async (contentIds: string[]) => {
     if (contentIds.length === 0) return;
@@ -29,6 +33,7 @@ export function KitList({ kits }: KitListProps) {
     try {
       const res = await fetch("/api/content/batch", {
         method: "POST",
+        credentials:"include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contentIds: missing }),
       });
@@ -52,8 +57,8 @@ export function KitList({ kits }: KitListProps) {
           return next;
         });
       }
-    } catch {
-      // Ignore errors
+    } catch (err) {
+      console.error("Failed to load playlists", err);
     }
   };
 
@@ -61,30 +66,33 @@ export function KitList({ kits }: KitListProps) {
     if (playlistsMap[kitId]) return; // Already loaded
 
     try {
-      const res = await fetch(`/api/kits/${kitId}/playlists`);
+      const res = await fetch(`/api/kits/${kitId}/playlists`,{credentials:"include",});
       const data = await res.json();
       if (data.success && data.playlists) {
         setPlaylistsMap((prev) => ({ ...prev, [kitId]: data.playlists }));
 
         // Load items for each playlist
+        const nextItemsMap: Record<string, PlaylistItemRecord[]> = {};
         const allContentIds: string[] = [];
         for (const playlist of data.playlists) {
-          const itemsRes = await fetch(`/api/playlists/${playlist.id}/items`);
+          const itemsRes = await fetch(
+            `/api/playlists/${playlist.id}/items`,
+            { credentials: "include" }
+          );
           const itemsData = await itemsRes.json();
           if (itemsData.success && itemsData.items) {
-            setItemsMap((prev) => ({ ...prev, [playlist.id]: itemsData.items }));
-            itemsData.items.forEach((item: PlaylistItemRecord) => {
-              allContentIds.push(item.contentId);
-            });
+            nextItemsMap[playlist.id] = itemsData.items;
+            itemsData.items.forEach((i: PlaylistItemRecord) =>
+              allContentIds.push(i.contentId)
+            );
           }
         }
-        // Load content titles for all items
-        if (allContentIds.length > 0) {
-          loadContentTitles(allContentIds);
-        }
+        setItemsMap((prev) => ({ ...prev, ...nextItemsMap }));
+        loadContentTitles(allContentIds);
+
       }
-    } catch {
-      // Ignore errors
+    }catch (err) {
+      console.error("Failed to load playlists", err);
     }
   };
 
@@ -144,7 +152,8 @@ export function KitList({ kits }: KitListProps) {
                               <ol>
                                 {items.map((item) => {
                                   const content = contentsMap[item.contentId];
-                                  const isPlaying = playingContent === item.contentId;
+                                  const isPlaying = playingItemId === item.id;
+
                                   return (
                                     <li key={item.id}>
                                       {content
@@ -153,7 +162,7 @@ export function KitList({ kits }: KitListProps) {
                                       {!isPlaying && (
                                         <button
                                           type="button"
-                                          onClick={() => setPlayingContent(item.contentId)}
+                                          onClick={() => setPlayingItemId(item.contentId)}
                                         >
                                           View / Play
                                         </button>
@@ -168,7 +177,7 @@ export function KitList({ kits }: KitListProps) {
                                           />
                                           <button
                                             type="button"
-                                            onClick={() => setPlayingContent(null)}
+                                            onClick={() => setPlayingItemId(null)}
                                           >
                                             Close
                                           </button>

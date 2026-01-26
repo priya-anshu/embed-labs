@@ -50,7 +50,8 @@ export async function getUserQR(): Promise<QRCode | null> {
     }
 
     return mapDatabaseRowToQRCode(data);
-  } catch {
+  } catch(e) {
+    console.error("getUserQR error:", e);
     return null;
   }
 }
@@ -82,7 +83,8 @@ export async function getUserQREvents(): Promise<QREvent[]> {
     }
 
     return data.map(mapDatabaseRowToQREvent);
-  } catch {
+  } catch(e) {
+    console.error("getUserQREvents error:", e);
     return [];
   }
 }
@@ -107,7 +109,8 @@ export async function getAllQRs(): Promise<QRCode[]> {
     }
 
     return data.map(mapDatabaseRowToQRCode);
-  } catch {
+  } catch(e) {
+    console.error("getAllQRs error:", e);
     return [];
   }
 }
@@ -132,7 +135,8 @@ export async function getAllQREvents(): Promise<QREvent[]> {
     }
 
     return data.map(mapDatabaseRowToQREvent);
-  } catch {
+  } catch(e) {
+    console.error("getAllQREvents error:", e);
     return [];
   }
 }
@@ -157,7 +161,8 @@ export async function getAllKits(): Promise<Kit[]> {
     }
 
     return data.map(mapDatabaseRowToKit);
-  } catch {
+  } catch(e) {
+    console.error("getAllKits error:", e);
     return [];
   }
 }
@@ -183,7 +188,8 @@ export async function getKitById(kitId: string): Promise<Kit | null> {
     }
 
     return mapDatabaseRowToKit(data);
-  } catch {
+  } catch(e) {
+    console.error("getKitById error:", e);
     return null;
   }
 }
@@ -209,7 +215,8 @@ export async function getKitItems(kitId: string): Promise<KitItem[]> {
     }
 
     return data.map(mapDatabaseRowToKitItem);
-  } catch {
+  } catch(e) {
+    console.error("getKitItems error:", e);
     return [];
   }
 }
@@ -235,7 +242,8 @@ export async function getQRKitGrants(qrId: string): Promise<QRKitGrant[]> {
     }
 
     return data.map(mapDatabaseRowToQRKitGrant);
-  } catch {
+  } catch(e) {
+    console.error("getQRKitGrants error:", e);
     return [];
   }
 }
@@ -261,7 +269,8 @@ export async function getKitGrants(kitId: string): Promise<QRKitGrant[]> {
     }
 
     return data.map(mapDatabaseRowToQRKitGrant);
-  } catch {
+  } catch(e) {
+    console.error("getKitGrants error:", e);
     return [];
   }
 }
@@ -323,9 +332,10 @@ export async function getUserKits(): Promise<Kit[]> {
     }
 
     return kitsData.map(mapDatabaseRowToKit);
-  } catch {
-    return [];
-  }
+  } catch (e) {
+  console.error("getUserKits error:", e);
+  return [];
+}
 }
 
 /**
@@ -385,7 +395,8 @@ export async function getUserKitPlaylists(kitId: string): Promise<PlaylistRecord
     }
 
     return playlistsData.map(mapDatabaseRowToPlaylist);
-  } catch {
+  } catch(e) {
+    console.error("getUserKitPlaylists error:", e);
     return [];
   }
 }
@@ -406,7 +417,7 @@ export async function getUserKitPlaylistsFromRequest(
   }
 
   try {
-    const supabase = createApiSupabaseClient(request);
+    const supabase = await createApiSupabaseClient(request);
 
     // Step 1: Find user's active QR
     const { data: qrData, error: qrError } = await supabase
@@ -448,7 +459,8 @@ export async function getUserKitPlaylistsFromRequest(
     }
 
     return playlistsData.map(mapDatabaseRowToPlaylist);
-  } catch {
+  } catch(e) {
+    console.error("getUserKitPlaylistsFromRequest error:", e);
     return [];
   }
 }
@@ -520,7 +532,8 @@ export async function getPlaylistItemsForUser(playlistId: string): Promise<Playl
     }
 
     return itemsData.map(mapDatabaseRowToPlaylistItem);
-  } catch {
+  } catch(e) {
+    console.error("getPlaylistItemsForUser error:", e);
     return [];
   }
 }
@@ -541,7 +554,7 @@ export async function getPlaylistItemsForUserFromRequest(
   }
 
   try {
-    const supabase = createApiSupabaseClient(request);
+    const supabase = await createApiSupabaseClient(request);
     const adminSupabase = createServiceRoleClient();
 
     // Step 1: Find user's active QR
@@ -593,7 +606,8 @@ export async function getPlaylistItemsForUserFromRequest(
     }
 
     return itemsData.map(mapDatabaseRowToPlaylistItem);
-  } catch {
+  } catch (e) {
+    console.error("getPlaylistItemsForUserFromRequest error:", e);
     return [];
   }
 }
@@ -674,7 +688,8 @@ export async function getUserContentRecords(
       filename: row.filename ?? null,
       contentType: row.content_type,
     }));
-  } catch {
+    } catch(e) {
+    console.error("getUserContentRecords error:", e);
     return [];
   }
 }
@@ -695,7 +710,7 @@ export async function getUserContentRecordsFromRequest(
   }
 
   try {
-    const supabase = createApiSupabaseClient(request);
+    const supabase = await createApiSupabaseClient(request);
     const adminSupabase = createServiceRoleClient();
 
     // Step 1: Find user's active QR
@@ -754,7 +769,8 @@ export async function getUserContentRecordsFromRequest(
       filename: row.filename ?? null,
       contentType: row.content_type,
     }));
-  } catch {
+  } catch(e) {
+    console.error("getUserContentRecordsFromRequest error:", e);
     return [];
   }
 }
