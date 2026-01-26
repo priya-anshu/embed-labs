@@ -11,29 +11,20 @@
  * Response: { success: true, playlists: PlaylistRecord[] }
  */
 
-import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/features/auth";
-import { getUserKitPlaylists } from "@/features/qr/services/read";
+import { NextRequest, NextResponse } from "next/server";
+import { getUserKitPlaylistsFromRequest } from "@/features/qr/services/read";
 
 interface RouteParams {
   params: Promise<{ kitId: string }>;
 }
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: RouteParams
 ) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: "UNAUTHORIZED" },
-        { status: 401 }
-      );
-    }
-
     const { kitId } = await params;
-    const playlists = await getUserKitPlaylists(kitId);
+    const playlists = await getUserKitPlaylistsFromRequest(request, kitId);
 
     return NextResponse.json({ success: true, playlists }, { status: 200 });
   } catch {

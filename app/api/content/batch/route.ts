@@ -14,19 +14,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/features/auth";
-import { getUserContentRecords } from "@/features/qr/services/read";
+import { getUserContentRecordsFromRequest } from "@/features/qr/services/read";
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: "UNAUTHORIZED" },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const { contentIds } = body;
 
@@ -37,7 +28,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const contents = await getUserContentRecords(contentIds);
+    const contents = await getUserContentRecordsFromRequest(request, contentIds);
 
     return NextResponse.json({ success: true, contents }, { status: 200 });
   } catch {

@@ -7,9 +7,10 @@
  * - SELECT queries only (no mutations)
  */
 
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient, createApiSupabaseClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { getCurrentUser } from "@/features/auth";
+import { getCurrentUser, getCurrentUserFromRequest } from "@/features/auth";
+import type { NextRequest } from "next/server";
 import {
   mapDatabaseRowToQRCode,
   mapDatabaseRowToQREvent,
@@ -390,6 +391,69 @@ export async function getUserKitPlaylists(kitId: string): Promise<PlaylistRecord
 }
 
 /**
+ * Get playlists for a kit (API route version).
+ * 
+ * Use this in API Route Handlers instead of getUserKitPlaylists.
+ */
+export async function getUserKitPlaylistsFromRequest(
+  request: NextRequest,
+  kitId: string
+): Promise<PlaylistRecord[]> {
+  const user = await getCurrentUserFromRequest(request);
+
+  if (!user) {
+    return [];
+  }
+
+  try {
+    const supabase = createApiSupabaseClient(request);
+
+    // Step 1: Find user's active QR
+    const { data: qrData, error: qrError } = await supabase
+      .from("qr_codes")
+      .select("id")
+      .eq("bound_by_user_id", user.id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (qrError || !qrData) {
+      return [];
+    }
+
+    // Step 2: Verify user has active grant for this kit
+    const { data: grantData, error: grantError } = await supabase
+      .from("qr_kit_grants")
+      .select("kit_id")
+      .eq("qr_id", qrData.id)
+      .eq("kit_id", kitId)
+      .is("revoked_at", null)
+      .maybeSingle();
+
+    if (grantError || !grantData) {
+      return [];
+    }
+
+    // Step 3: User has access - fetch playlists (using service role for playlists table)
+    // This is safe because we've already validated kit access via grants
+    const adminSupabase = createServiceRoleClient();
+    const { data: playlistsData, error: playlistsError } = await adminSupabase
+      .from("playlists")
+      .select("id, kit_id, name, description, sort_index, created_at, deleted_at")
+      .eq("kit_id", kitId)
+      .is("deleted_at", null)
+      .order("sort_index", { ascending: true });
+
+    if (playlistsError || !playlistsData) {
+      return [];
+    }
+
+    return playlistsData.map(mapDatabaseRowToPlaylist);
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Get playlist items for a playlist (user-facing, read-only).
  *
  * SECURITY: Validates user has active QR with active kit grant for the playlist's kit.
@@ -406,6 +470,79 @@ export async function getPlaylistItemsForUser(playlistId: string): Promise<Playl
   try {
     const supabase = await createServerSupabaseClient();
     const adminSupabase = createServiceRoleClient() ;
+
+    // Step 1: Find user's active QR
+    const { data: qrData, error: qrError } = await supabase
+      .from("qr_codes")
+      .select("id")
+      .eq("bound_by_user_id", user.id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (qrError || !qrData) {
+      return [];
+    }
+
+    // Step 2: Get playlist to find its kit_id
+    const { data: playlistData, error: playlistError } = await adminSupabase
+      .from("playlists")
+      .select("kit_id")
+      .eq("id", playlistId)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (playlistError || !playlistData) {
+      return [];
+    }
+
+    // Step 3: Verify user has active grant for this kit
+    const { data: grantData, error: grantError } = await supabase
+      .from("qr_kit_grants")
+      .select("kit_id")
+      .eq("qr_id", qrData.id)
+      .eq("kit_id", playlistData.kit_id)
+      .is("revoked_at", null)
+      .maybeSingle();
+
+    if (grantError || !grantData) {
+      return [];
+    }
+
+    // Step 4: User has access - fetch playlist items
+    const { data: itemsData, error: itemsError } = await adminSupabase
+      .from("playlist_items")
+      .select("id, playlist_id, content_id, sort_index, created_at")
+      .eq("playlist_id", playlistId)
+      .order("sort_index", { ascending: true });
+
+    if (itemsError || !itemsData) {
+      return [];
+    }
+
+    return itemsData.map(mapDatabaseRowToPlaylistItem);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get playlist items for a playlist (API route version).
+ * 
+ * Use this in API Route Handlers instead of getPlaylistItemsForUser.
+ */
+export async function getPlaylistItemsForUserFromRequest(
+  request: NextRequest,
+  playlistId: string
+): Promise<PlaylistItemRecord[]> {
+  const user = await getCurrentUserFromRequest(request);
+
+  if (!user) {
+    return [];
+  }
+
+  try {
+    const supabase = createApiSupabaseClient(request);
+    const adminSupabase = createServiceRoleClient();
 
     // Step 1: Find user's active QR
     const { data: qrData, error: qrError } = await supabase
@@ -532,6 +669,86 @@ export async function getUserContentRecords(
       }
 
       return contentsData.map((row) => ({
+      id: row.id,
+      title: row.title ?? null,
+      filename: row.filename ?? null,
+      contentType: row.content_type,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get content records for content IDs (API route version).
+ * 
+ * Use this in API Route Handlers instead of getUserContentRecords.
+ */
+export async function getUserContentRecordsFromRequest(
+  request: NextRequest,
+  contentIds: string[]
+): Promise<Array<{ id: string; title: string | null; filename: string | null; contentType: string }>> {
+  const user = await getCurrentUserFromRequest(request);
+
+  if (!user || contentIds.length === 0) {
+    return [];
+  }
+
+  try {
+    const supabase = createApiSupabaseClient(request);
+    const adminSupabase = createServiceRoleClient();
+
+    // Step 1: Find user's active QR
+    const { data: qrData, error: qrError } = await supabase
+      .from("qr_codes")
+      .select("id")
+      .eq("bound_by_user_id", user.id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (qrError || !qrData) {
+      return [];
+    }
+
+    // Step 2: Find active grants for this QR
+    const { data: grantsData, error: grantsError } = await supabase
+      .from("qr_kit_grants")
+      .select("kit_id")
+      .eq("qr_id", qrData.id)
+      .is("revoked_at", null);
+
+    if (grantsError || !grantsData || grantsData.length === 0) {
+      return [];
+    }
+
+    const kitIds = grantsData.map((g: { kit_id: string }) => g.kit_id);
+
+    // Step 3: Verify content is in user's kit_items
+    const { data: kitItemsData, error: kitItemsError } = await adminSupabase
+      .from("kit_items")
+      .select("content_id")
+      .in("kit_id", kitIds)
+      .in("content_id", contentIds);
+
+    if (kitItemsError || !kitItemsData) {
+      return [];
+    }
+
+    const accessibleContentIds = new Set(
+      kitItemsData.map((item: { content_id: string }) => item.content_id)
+    );
+
+    // Step 4: Fetch content metadata only for accessible content
+    const { data: contentsData, error: contentsError } = await adminSupabase
+      .from("contents")
+      .select("id, content_type, title, filename")
+      .in("id", Array.from(accessibleContentIds));
+
+    if (contentsError || !contentsData) {
+      return [];
+    }
+
+    return contentsData.map((row) => ({
       id: row.id,
       title: row.title ?? null,
       filename: row.filename ?? null,

@@ -17,6 +17,7 @@ export {
   getSession,
   isAuthenticated,
   getCurrentUser,
+  getCurrentUserFromRequest,
 } from "./services/session";
 
 // Server Actions
