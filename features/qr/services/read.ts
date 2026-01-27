@@ -546,71 +546,43 @@ export async function getPlaylistItemsForUser(playlistId: string): Promise<Playl
 export async function getPlaylistItemsForUserFromRequest(
   request: NextRequest,
   playlistId: string
-): Promise<PlaylistItemRecord[]> {
-  const user = await getCurrentUserFromRequest(request);
+) {
+  const supabase = await createApiSupabaseClient(request);
 
-  if (!user) {
-    return [];
+  const { data, error } = await supabase
+    .from("playlist_items")
+    .select(`
+      id,
+      sort_index,
+      contents (
+        id,
+        title,
+        content_type,
+        filename,
+        mime_type,
+        bytes
+      )
+    `)
+    .eq("playlist_id", playlistId)
+    .order("sort_index");
+
+  if (error) {
+    console.error("Playlist items fetch failed:", error);
+    throw error;
   }
 
-  try {
-    const supabase = await createApiSupabaseClient(request);
-    const adminSupabase = createServiceRoleClient();
-
-    // Step 1: Find user's active QR
-    const { data: qrData, error: qrError } = await supabase
-      .from("qr_codes")
-      .select("id")
-      .eq("bound_by_user_id", user.id)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (qrError || !qrData) {
-      return [];
-    }
-
-    // Step 2: Get playlist to find its kit_id
-    const { data: playlistData, error: playlistError } = await adminSupabase
-      .from("playlists")
-      .select("kit_id")
-      .eq("id", playlistId)
-      .is("deleted_at", null)
-      .maybeSingle();
-
-    if (playlistError || !playlistData) {
-      return [];
-    }
-
-    // Step 3: Verify user has active grant for this kit
-    const { data: grantData, error: grantError } = await supabase
-      .from("qr_kit_grants")
-      .select("kit_id")
-      .eq("qr_id", qrData.id)
-      .eq("kit_id", playlistData.kit_id)
-      .is("revoked_at", null)
-      .maybeSingle();
-
-    if (grantError || !grantData) {
-      return [];
-    }
-
-    // Step 4: User has access - fetch playlist items
-    const { data: itemsData, error: itemsError } = await adminSupabase
-      .from("playlist_items")
-      .select("id, playlist_id, content_id, sort_index, created_at")
-      .eq("playlist_id", playlistId)
-      .order("sort_index", { ascending: true });
-
-    if (itemsError || !itemsData) {
-      return [];
-    }
-
-    return itemsData.map(mapDatabaseRowToPlaylistItem);
-  } catch (e) {
-    console.error("getPlaylistItemsForUserFromRequest error:", e);
-    return [];
-  }
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    title: row.contents?.title ?? "Untitled",
+    contentType: row.contents?.content_type ?? "unknown",
+    filename: row.contents?.filename,
+    mimeType: row.contents?.mime_type,
+    bytes: row.contents?.bytes,
+  }));
 }
+
+
+
 
 /**
  * Get content records for content IDs (user-facing, read-only).

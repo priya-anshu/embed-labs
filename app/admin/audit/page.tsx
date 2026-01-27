@@ -19,7 +19,7 @@ export default async function AdminAuditPage() {
 
   return (
     <main>
-      <h1>Audit Log</h1>
+      <h1 className="text-2xl font-semibold">Audit Log</h1>
       <section>
         <h2>QR Events</h2>
         {events.length > 0 ? (

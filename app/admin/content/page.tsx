@@ -24,7 +24,7 @@ export default async function AdminContentPage() {
   return (
     <div>
       <div><Link href="/admin">← Admin</Link></div>
-      <h1>Content</h1>
+      <h1 className="text-2xl font-semibold">Content</h1>
       <section>
         <h2>Upload</h2>
         <UploadForm />

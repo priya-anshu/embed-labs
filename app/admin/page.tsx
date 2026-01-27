@@ -1,49 +1,27 @@
-/**
- * Admin dashboard shell.
- *
- * Minimal, unstyled placeholder. Access should be restricted
- * to admin role via server-side checks and routing.
- */
-
-import { redirect } from "next/navigation";
-import { getCurrentUserRole } from "@/features/auth";
-import { getAllQRs, getAllQREvents } from "@/features/qr/services/read";
-
-export default async function AdminPage() {
-  const role = await getCurrentUserRole();
-
-  if (role !== "admin") {
-    redirect("/dashboard");
-  }
-
-  const qrCodes = await getAllQRs();
-  const events = await getAllQREvents();
-
+export default function AdminDashboard() {
   return (
-    <main>
-      <h1>Admin Dashboard</h1>
-      <section>
-        <h2>QR Codes Overview</h2>
-        <p>Total QR Codes: {qrCodes.length}</p>
-        <p>Active: {qrCodes.filter((qr) => qr.isActive).length}</p>
-        <p>Revoked: {qrCodes.filter((qr) => !qr.isActive).length}</p>
-        <p>Bound: {qrCodes.filter((qr) => qr.boundByUserId).length}</p>
-      </section>
-      <section>
-        <h2>Recent Events</h2>
-        {events.length > 0 ? (
-          <ul>
-            {events.slice(0, 10).map((event) => (
-              <li key={event.id}>
-                {event.action} - QR: {event.qrId} - {event.createdAt.toLocaleString()}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No events found.</p>
-        )}
-      </section>
-    </main>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">
+          Quick overview of platform activity
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <DashboardCard title="Total Kits" />
+        <DashboardCard title="Active QRs" />
+        <DashboardCard title="Audit Events" />
+      </div>
+    </div>
   );
 }
 
+function DashboardCard({ title }: { title: string }) {
+  return (
+    <div className="rounded-lg border bg-card p-5">
+      <h3 className="text-sm font-medium">{title}</h3>
+      <p className="mt-2 text-2xl font-bold">—</p>
+    </div>
+  );
+}

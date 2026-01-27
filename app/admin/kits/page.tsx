@@ -28,7 +28,7 @@ export default async function AdminKitsPage() {
 
   return (
     <div>
-      <h1>Kit Management</h1>
+      <h1 className="text-2xl font-semibold">Kit Management</h1>
       <div>
         <h2>Create New Kit</h2>
         <CreateKitForm />
